@@ -1,30 +1,596 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BetBot Alpha - Dashboard</title>
-    <link rel="stylesheet" href="static/css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BetBot Alpha</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #080b10;
+  --bg2:     #0d1117;
+  --bg3:     #111820;
+  --border:  #1e2d3d;
+  --accent:  #00d4ff;
+  --accent2: #7b2fff;
+  --green:   #00ff88;
+  --red:     #ff3b5c;
+  --yellow:  #ffd700;
+  --text:    #c9d6e3;
+  --text2:   #5a7a95;
+  --glow:    0 0 20px rgba(0,212,255,0.3);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'Rajdhani',sans-serif; font-size:16px;
+  min-height:100vh; overflow-x:hidden;
+}
+body::before {
+  content:''; position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size:40px 40px; pointer-events:none; z-index:0;
+}
+body::after {
+  content:''; position:fixed;
+  width:600px; height:600px;
+  background:radial-gradient(circle,rgba(123,47,255,0.08) 0%,transparent 70%);
+  top:-200px; right:-200px; pointer-events:none; z-index:0;
+}
+.wrapper { position:relative; z-index:1; max-width:1300px; margin:0 auto; padding:0 24px 80px; }
+
+/* HEADER */
+header {
+  padding:32px 0 24px; display:flex; align-items:center; gap:20px;
+  border-bottom:1px solid var(--border); margin-bottom:36px;
+}
+.logo-icon {
+  width:52px; height:52px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:12px; display:flex; align-items:center; justify-content:center;
+  font-size:26px; box-shadow:var(--glow); flex-shrink:0;
+}
+.logo-text h1 {
+  font-family:'Orbitron',monospace; font-size:22px; font-weight:900; letter-spacing:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.logo-text span { font-size:12px; color:var(--text2); letter-spacing:2px; font-family:'Share Tech Mono',monospace; }
+.hbadge {
+  margin-left:auto;
+  background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(123,47,255,0.15));
+  border:1px solid var(--border); border-radius:20px; padding:6px 16px;
+  font-size:12px; font-family:'Orbitron',monospace; color:var(--accent); letter-spacing:2px;
+}
+
+/* FORM */
+.form-card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:16px; padding:32px; margin-bottom:28px;
+  position:relative; overflow:hidden;
+}
+.form-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent));
+}
+.form-title { font-family:'Orbitron',monospace; font-size:13px; letter-spacing:3px; color:var(--text2); margin-bottom:24px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr auto; gap:16px; align-items:end; }
+.field label { display:block; font-size:11px; letter-spacing:2px; color:var(--text2); margin-bottom:8px; font-family:'Orbitron',monospace; }
+.field input {
+  width:100%; background:var(--bg3); border:1px solid var(--border);
+  border-radius:10px; padding:14px 18px; color:var(--text);
+  font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:600;
+  transition:all 0.2s; outline:none;
+}
+.field input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,212,255,0.1); }
+.field input::placeholder { color:var(--text2); font-weight:400; }
+.btn-analizar {
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none; border-radius:10px; padding:14px 32px; color:#fff;
+  font-family:'Orbitron',monospace; font-size:13px; font-weight:700; letter-spacing:2px;
+  cursor:pointer; transition:all 0.2s; white-space:nowrap; box-shadow:var(--glow);
+}
+.btn-analizar:hover  { transform:translateY(-2px); box-shadow:0 0 30px rgba(0,212,255,0.5); }
+.btn-analizar:active { transform:translateY(0); }
+.btn-analizar:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+/* LOG */
+#log-box {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:12px; padding:16px 20px; margin-bottom:28px;
+  font-family:'Share Tech Mono',monospace; font-size:13px;
+  display:none; max-height:180px; overflow-y:auto;
+}
+.ll      { padding:2px 0; color:var(--text2); }
+.ll.ok   { color:var(--green); }
+.ll.err  { color:var(--red); }
+.ll.info { color:var(--accent); }
+
+/* LOADING */
+#loading { display:none; text-align:center; padding:48px; }
+.spinner {
+  width:50px; height:50px; border:3px solid var(--border);
+  border-top-color:var(--accent); border-radius:50%;
+  animation:spin 0.8s linear infinite; margin:0 auto 20px;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+.loading-text { font-family:'Orbitron',monospace; font-size:12px; letter-spacing:3px; color:var(--text2); }
+
+/* RESULTADOS */
+#results { display:none; }
+
+/* BANNERS */
+.vivo-banner {
+  background:linear-gradient(135deg,rgba(255,59,92,0.1),rgba(255,59,92,0.05));
+  border:1px solid rgba(255,59,92,0.3); border-radius:12px;
+  padding:16px 24px; margin-bottom:20px; display:flex; align-items:center; gap:14px;
+}
+.vivo-dot {
+  width:10px; height:10px; border-radius:50%;
+  background:var(--red); flex-shrink:0; animation:pred 1s infinite;
+}
+@keyframes pred { 0%,100%{box-shadow:0 0 0 0 rgba(255,59,92,0.7)} 50%{box-shadow:0 0 0 8px rgba(255,59,92,0)} }
+.proximo-banner {
+  background:rgba(123,47,255,0.08); border:1px solid rgba(123,47,255,0.25);
+  border-radius:12px; padding:14px 20px; margin-bottom:20px;
+  font-size:14px; display:flex; align-items:center; gap:12px;
+}
+
+/* TEAM CARDS */
+.teams-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+.team-card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:16px; padding:24px; position:relative; overflow:hidden;
+}
+.team-card.local::before  { content:''; position:absolute; top:0;left:0;right:0;height:3px; background:linear-gradient(90deg,var(--accent),transparent); }
+.team-card.visita::before { content:''; position:absolute; top:0;left:0;right:0;height:3px; background:linear-gradient(90deg,var(--accent2),transparent); }
+.team-header { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+.team-badge { width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.local  .team-badge { background:rgba(0,212,255,0.12);  border:1px solid rgba(0,212,255,0.3); }
+.visita .team-badge { background:rgba(123,47,255,0.12); border:1px solid rgba(123,47,255,0.3); }
+.team-name { font-family:'Orbitron',monospace; font-size:14px; font-weight:700; line-height:1.3; }
+.team-role { font-size:11px; letter-spacing:2px; color:var(--text2); font-family:'Share Tech Mono',monospace; }
+.stat-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:14px;
+}
+.stat-row:last-child { border-bottom:none; }
+.stat-label { color:var(--text2); font-size:12px; letter-spacing:1px; }
+.stat-val   { font-weight:600; font-family:'Share Tech Mono',monospace; }
+.stat-val.g { color:var(--green); }
+.stat-val.y { color:var(--yellow); }
+.stat-val.r { color:var(--red); }
+.stat-val.c { color:var(--accent); }
+.tabla-pos {
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.2);
+  border-radius:6px; padding:4px 10px; font-size:13px; margin-bottom:14px;
+  font-family:'Share Tech Mono',monospace;
+}
+.forma-chips { display:flex; gap:5px; flex-wrap:wrap; margin:4px 0; }
+.chip {
+  width:26px; height:26px; border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700; font-family:'Orbitron',monospace;
+}
+.chip.W { background:rgba(0,255,136,0.2);  color:var(--green);  border:1px solid rgba(0,255,136,0.3); }
+.chip.D { background:rgba(255,215,0,0.15); color:var(--yellow); border:1px solid rgba(255,215,0,0.3); }
+.chip.L { background:rgba(255,59,92,0.15); color:var(--red);    border:1px solid rgba(255,59,92,0.3); }
+
+/* SECTION CARDS */
+.section-card { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:20px; }
+.section-title {
+  font-family:'Orbitron',monospace; font-size:11px; letter-spacing:3px; color:var(--text2);
+  margin-bottom:18px; display:flex; align-items:center; gap:10px;
+}
+.section-title::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--border),transparent); }
+
+/* MATCH TABLE */
+.match-table { width:100%; border-collapse:collapse; font-size:14px; }
+.match-table th {
+  text-align:left; padding:8px 10px; font-size:10px; letter-spacing:2px; color:var(--text2);
+  border-bottom:1px solid var(--border); font-family:'Orbitron',monospace; font-weight:400;
+}
+.match-table td { padding:9px 10px; border-bottom:1px solid rgba(255,255,255,0.03); }
+.match-table tr:last-child td { border-bottom:none; }
+.match-table tr:hover td { background:rgba(255,255,255,0.02); }
+.res-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:22px; height:22px; border-radius:5px;
+  font-size:10px; font-weight:700; font-family:'Orbitron',monospace;
+}
+.res-V { background:rgba(0,255,136,0.15); color:var(--green);  border:1px solid rgba(0,255,136,0.3); }
+.res-E { background:rgba(255,215,0,0.12); color:var(--yellow); border:1px solid rgba(255,215,0,0.3); }
+.res-D { background:rgba(255,59,92,0.12); color:var(--red);    border:1px solid rgba(255,59,92,0.3); }
+.cond-l { color:var(--accent);  font-size:11px; letter-spacing:1px; }
+.cond-v { color:var(--accent2); font-size:11px; letter-spacing:1px; }
+
+/* H2H */
+.h2h-row { display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:14px; }
+.h2h-row:last-child { border-bottom:none; }
+.h2h-home { text-align:right; font-weight:600; }
+.h2h-away { text-align:left;  font-weight:600; }
+.h2h-score {
+  background:var(--bg3); border:1px solid var(--border); border-radius:8px;
+  padding:6px 14px; font-family:'Share Tech Mono',monospace;
+  font-size:16px; font-weight:700; text-align:center; min-width:70px;
+}
+.h2h-fecha { font-size:11px; color:var(--text2); font-family:'Share Tech Mono',monospace; }
+
+/* PREDICCION */
+#pred-section {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:20px; padding:36px; margin-top:8px;
+  position:relative; overflow:hidden;
+}
+#pred-section::before {
+  content:''; position:absolute; top:0;left:0;right:0; height:3px;
+  background:linear-gradient(90deg,var(--green),var(--accent),var(--accent2),var(--green));
+  background-size:200%; animation:shimmer 3s linear infinite;
+}
+@keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+.pred-title {
+  font-family:'Orbitron',monospace; font-size:20px; font-weight:900; letter-spacing:3px;
+  text-align:center; margin-bottom:8px;
+  background:linear-gradient(90deg,var(--accent),var(--green));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.pred-matchup { text-align:center; color:var(--text2); font-size:14px; letter-spacing:2px; margin-bottom:32px; font-family:'Share Tech Mono',monospace; }
+.prob-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:32px; }
+.prob-card {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:14px; padding:20px 16px; text-align:center;
+  position:relative; overflow:hidden; transition:all 0.3s;
+}
+.prob-card.winner { border-color:var(--accent); box-shadow:0 0 20px rgba(0,212,255,0.15); }
+.prob-card.winner::after {
+  content:'★ FAVORITO'; position:absolute; top:8px; right:8px;
+  font-size:8px; letter-spacing:1px; color:var(--accent); font-family:'Orbitron',monospace;
+}
+.prob-label  { font-size:11px; color:var(--text2); letter-spacing:2px; margin-bottom:12px; font-family:'Orbitron',monospace; }
+.prob-number { font-family:'Orbitron',monospace; font-size:36px; font-weight:900; line-height:1; margin-bottom:12px; }
+.prob-bar    { height:4px; background:var(--bg); border-radius:2px; overflow:hidden; }
+.prob-fill   { height:100%; border-radius:2px; transition:width 1s cubic-bezier(0.4,0,0.2,1); }
+.marcador-box { display:flex; align-items:center; justify-content:center; gap:20px; margin-bottom:32px; }
+.marcador-equipo { text-align:center; }
+.marcador-nombre { font-size:13px; color:var(--text2); letter-spacing:1px; margin-bottom:8px; }
+.marcador-goles  { font-family:'Orbitron',monospace; font-size:48px; font-weight:900; line-height:1; }
+.marcador-vs     { font-family:'Orbitron',monospace; font-size:16px; color:var(--text2); padding:0 10px; }
+.badges-row { display:flex; gap:12px; justify-content:center; margin-bottom:32px; flex-wrap:wrap; }
+.badge-item {
+  background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:8px 16px;
+  font-size:12px; letter-spacing:1px; font-family:'Share Tech Mono',monospace;
+  display:flex; align-items:center; gap:8px;
+}
+.badge-item .dot { width:8px; height:8px; border-radius:50%; }
+.badge-item.conf-alta    .dot { background:var(--green); }
+.badge-item.conf-media   .dot { background:var(--yellow); }
+.badge-item.conf-baja    .dot { background:var(--red); }
+.badge-item.riesgo-bajo  .dot { background:var(--green); }
+.badge-item.riesgo-medio .dot { background:var(--yellow); }
+.badge-item.riesgo-alto  .dot { background:var(--red); }
+.apuestas-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+.apuesta-card { background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center; }
+.apuesta-tipo { font-size:10px; letter-spacing:2px; color:var(--text2); margin-bottom:8px; font-family:'Orbitron',monospace; }
+.apuesta-val  { font-size:15px; font-weight:700; color:var(--text); }
+.apuesta-segura-box {
+  background:linear-gradient(135deg,rgba(0,255,136,0.06),rgba(0,212,255,0.06));
+  border:1px solid rgba(0,255,136,0.25); border-radius:14px; padding:22px 24px; margin-bottom:24px;
+}
+.apuesta-segura-title { font-family:'Orbitron',monospace; font-size:11px; letter-spacing:3px; color:var(--green); margin-bottom:10px; }
+.apuesta-segura-val   { font-size:18px; font-weight:700; color:#fff; margin-bottom:8px; }
+.apuesta-segura-razon { font-size:14px; color:var(--text2); line-height:1.6; }
+.analisis-box  { background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:22px 24px; }
+.analisis-title{ font-family:'Orbitron',monospace; font-size:10px; letter-spacing:3px; color:var(--text2); margin-bottom:14px; }
+.analisis-text { font-size:15px; line-height:1.8; color:var(--text); }
+.advertencia  { text-align:center; margin-top:20px; font-size:12px; color:var(--text2); letter-spacing:1px; padding:12px; border-top:1px solid var(--border); }
+
+/* MISC */
+.fade-in { animation:fadeIn 0.5s ease forwards; opacity:0; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--bg2); }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+
+@media(max-width:768px) {
+  .form-row      { grid-template-columns:1fr; }
+  .teams-grid    { grid-template-columns:1fr; }
+  .prob-grid     { grid-template-columns:1fr; }
+  .apuestas-grid { grid-template-columns:1fr 1fr; }
+}
+</style>
 </head>
 <body>
+<div class="wrapper">
 
-    <header>
-        <nav class="navbar">
-            <div class="logo">BETBOT<span>ALPHA</span></div>
-            <div class="user-status">Esteban - Conectado</div>
-        </nav>
-    </header>
+  <header>
+    <div class="logo-icon">⚽</div>
+    <div class="logo-text">
+      <h1>BETBOT</h1>
+      <span>FOOTBALL INTELLIGENCE v1.0 ALPHA</span>
+    </div>
+    <div class="hbadge">ALPHA</div>
+  </header>
 
-    <main class="container">
-        <section class="welcome-section">
-            <h1>Panel de Control</h1>
-            <p>Analizando cuotas y probabilidades en tiempo real.</p>
-        </section>
+  <div class="form-card">
+    <div class="form-title">// INGRESAR EQUIPOS</div>
+    <div class="form-row">
+      <div class="field">
+        <label>EQUIPO LOCAL</label>
+        <input type="text" id="inp-local" placeholder="ej: Bayern, Liverpool, PSG..." autocomplete="off">
+      </div>
+      <div class="field">
+        <label>EQUIPO VISITANTE</label>
+        <input type="text" id="inp-visita" placeholder="ej: Real Madrid, Arsenal..." autocomplete="off">
+      </div>
+      <button class="btn-analizar" id="btn-analizar" onclick="analizar()">ANALIZAR</button>
+    </div>
+  </div>
 
-        <div id="app">
-            </div>
-    </main>
+  <div id="log-box"></div>
 
-    <script src="static/js/main.js"></script>
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-text">CARGANDO DATOS...</div>
+  </div>
+
+  <div id="results">
+    <div id="vivo-box"></div>
+    <div id="proximo-box"></div>
+    <div class="teams-grid" id="teams-grid"></div>
+    <div class="section-card" id="partidos-local-box"></div>
+    <div class="section-card" id="partidos-visita-box"></div>
+    <div class="section-card" id="h2h-box"></div>
+
+    <div id="pred-section" style="display:none">
+      <div class="pred-title">PREDICCION IA</div>
+      <div class="pred-matchup" id="pred-matchup"></div>
+      <div class="prob-grid"    id="prob-grid"></div>
+      <div class="marcador-box" id="marcador-box"></div>
+      <div class="badges-row"   id="badges-row"></div>
+      <div class="apuestas-grid" id="apuestas-grid"></div>
+      <div id="apuesta-segura-box" class="apuesta-segura-box"></div>
+      <div id="analisis-box"       class="analisis-box"></div>
+      <div class="advertencia">⚠️ Solo para referencia. Apuesta con responsabilidad. BetBot no garantiza resultados.</div>
+    </div>
+  </div>
+
+</div>
+<script>
+const MODEL = "llama3.2";
+let eqLocal = "", eqVisita = "";
+
+function log(msg, t="") {
+  const b = document.getElementById("log-box");
+  b.style.display = "block";
+  const d = document.createElement("div");
+  d.className = "ll " + t;
+  d.textContent = new Date().toLocaleTimeString() + " › " + msg;
+  b.appendChild(d);
+  b.scrollTop = b.scrollHeight;
+}
+function clearLog() {
+  const b = document.getElementById("log-box");
+  b.innerHTML = ""; b.style.display = "none";
+}
+function setLoading(msg) {
+  document.getElementById("loading").style.display = "block";
+  document.getElementById("loading-text").textContent = msg;
+}
+function hideLoading() { document.getElementById("loading").style.display = "none"; }
+
+function analizar() {
+  const local  = document.getElementById("inp-local").value.trim();
+  const visita = document.getElementById("inp-visita").value.trim();
+  if (!local || !visita) { alert("Ingresa ambos equipos"); return; }
+  eqLocal = local; eqVisita = visita;
+  clearLog();
+  document.getElementById("results").style.display = "none";
+  document.getElementById("pred-section").style.display = "none";
+  document.getElementById("vivo-box").innerHTML = "";
+  document.getElementById("proximo-box").innerHTML = "";
+  document.getElementById("btn-analizar").disabled = true;
+  setLoading("CONECTANDO...");
+
+  fetch("/analizar", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({local, visita})
+  }).then(async resp => {
+    const reader = resp.body.getReader();
+    const dec    = new TextDecoder();
+    let buf = "";
+    while(true) {
+      const {done, value} = await reader.read();
+      if(done) break;
+      buf += dec.decode(value, {stream:true});
+      const lines = buf.split("\n");
+      buf = lines.pop();
+      for(const line of lines) {
+        if(!line.startsWith("data:")) continue;
+        try { handleEvent(JSON.parse(line.slice(5).trim())); } catch(e){}
+      }
+    }
+  }).catch(e => {
+    hideLoading();
+    log("Error: " + e, "err");
+    document.getElementById("btn-analizar").disabled = false;
+  });
+}
+
+function handleEvent(e) {
+  const {type, data} = e;
+  if(type === "status") {
+    log(data, "info");
+    document.getElementById("loading-text").textContent = data.toUpperCase();
+  } else if(type === "error") {
+    hideLoading(); log("ERROR: " + data, "err");
+    document.getElementById("btn-analizar").disabled = false;
+  } else if(type === "teams") {
+    hideLoading(); setLoading("ANALIZANDO CON IA...");
+    renderTeams(data);
+  } else if(type === "prediccion") {
+    hideLoading(); renderPrediccion(data);
+    log("Análisis completado ✓", "ok");
+    document.getElementById("btn-analizar").disabled = false;
+  } else if(type === "done") {
+    hideLoading();
+    document.getElementById("btn-analizar").disabled = false;
+  }
+}
+
+function renderTeams(data) {
+  const {local, visita, h2h, vivo, proximos} = data;
+  document.getElementById("results").style.display = "block";
+
+  if(vivo) {
+    const ft = vivo.score?.fullTime || {};
+    document.getElementById("vivo-box").innerHTML = `
+      <div class="vivo-banner fade-in">
+        <div class="vivo-dot"></div>
+        <div><strong style="color:var(--red)">EN VIVO</strong>
+        <span style="color:var(--text2);margin:0 10px">·</span>
+        ${vivo.homeTeam.name} <strong style="font-family:'Orbitron',monospace;margin:0 8px">${ft.home||0} — ${ft.away||0}</strong> ${vivo.awayTeam.name}</div>
+      </div>`;
+  }
+
+  if(proximos && proximos.length) {
+    const p = proximos[0];
+    document.getElementById("proximo-box").innerHTML = `
+      <div class="proximo-banner fade-in">
+        <span style="font-size:20px">📅</span>
+        <div><span style="color:var(--accent2);font-weight:700">${p.comp}</span>
+        <span style="color:var(--text2);margin:0 10px">·</span>${p.fecha} ${p.hora}
+        <span style="color:var(--text2);margin:0 10px">·</span>${p.local} vs ${p.visita}</div>
+      </div>`;
+  }
+
+  document.getElementById("teams-grid").innerHTML = teamCard(local,"local") + teamCard(visita,"visita");
+  document.getElementById("partidos-local-box").innerHTML  = partidosTable(local);
+  document.getElementById("partidos-visita-box").innerHTML = partidosTable(visita);
+  document.getElementById("h2h-box").innerHTML = h2hSection(h2h);
+}
+
+function teamCard(eq, tipo) {
+  const s = eq.stats, t = eq.tabla, g = eq.goleadores;
+  const emoji = tipo==="local" ? "🏠" : "✈️";
+  const tablaH = t ? `<div class="tabla-pos">📊 #${t.posicion} ${t.liga} · ${t.puntos}pts · GD ${t.dg>=0?"+"+t.dg:t.dg}</div>` : "";
+  const golesH = (g&&g.length) ? `<div class="stat-row"><span class="stat-label">GOLEADORES</span><span class="stat-val" style="font-size:12px">${g.map(x=>`${x.nombre.split(" ").pop()} <span style="color:var(--accent)">${x.goles}⚽</span>`).join(" · ")}</span></div>` : "";
+  const forma  = s.forma.split("").map(c=>`<div class="chip ${c}">${c}</div>`).join("");
+  const ac = s.pct_ambos_anotan>=60?"g":s.pct_ambos_anotan>=40?"y":"r";
+  const mc = s.pct_mas_2_5>=60?"g":s.pct_mas_2_5>=40?"y":"r";
+  const rc = s.ultimo_resultado==="V"?"g":s.ultimo_resultado==="E"?"y":"r";
+  const rl = s.ultimo_resultado==="V"?"VICTORIAS":s.ultimo_resultado==="E"?"EMPATES":"DERROTAS";
+  const rachaH = s.racha_actual>=2 ? `<div class="stat-row"><span class="stat-label">RACHA</span><span class="stat-val ${rc}">${s.racha_actual}x ${rl}</span></div>` : "";
+  return `
+  <div class="team-card ${tipo} fade-in">
+    <div class="team-header">
+      <div class="team-badge">${emoji}</div>
+      <div><div class="team-name">${eq.nombre}</div><div class="team-role">${tipo.toUpperCase()}</div></div>
+    </div>
+    ${tablaH}
+    <div class="stat-row"><span class="stat-label">FORMA</span><div class="forma-chips">${forma}</div></div>
+    <div class="stat-row"><span class="stat-label">BALANCE</span><span class="stat-val">${s.victorias}V · ${s.empates}E · ${s.derrotas}D</span></div>
+    <div class="stat-row"><span class="stat-label">COMO LOCAL</span><span class="stat-val c">GF ${s.gf_local} / GC ${s.gc_local}</span></div>
+    <div class="stat-row"><span class="stat-label">COMO VISITA</span><span class="stat-val" style="color:var(--accent2)">GF ${s.gf_visita} / GC ${s.gc_visita}</span></div>
+    <div class="stat-row"><span class="stat-label">AMBOS ANOTAN</span><span class="stat-val ${ac}">${s.pct_ambos_anotan}%</span></div>
+    <div class="stat-row"><span class="stat-label">+2.5 GOLES</span><span class="stat-val ${mc}">${s.pct_mas_2_5}%</span></div>
+    <div class="stat-row"><span class="stat-label">PROM GOLES/P</span><span class="stat-val">${s.promedio_total_goles}</span></div>
+    ${golesH}${rachaH}
+  </div>`;
+}
+
+function partidosTable(eq) {
+  const rows = eq.partidos.map(p => `
+    <tr>
+      <td style="color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:12px">${p.fecha}</td>
+      <td>${p.rival}</td>
+      <td class="${p.condicion==="LOCAL"?"cond-l":"cond-v"}">${p.condicion}</td>
+      <td><span class="res-badge res-${p.resultado}">${p.resultado}</span></td>
+      <td style="font-family:'Share Tech Mono',monospace;font-weight:700;color:var(--green)">${p.gf}</td>
+      <td style="font-family:'Share Tech Mono',monospace;font-weight:700;color:var(--red)">${p.gc}</td>
+      <td style="color:var(--text2);font-size:12px">${p.competicion}</td>
+    </tr>`).join("");
+  return `
+    <div class="section-title">ÚLTIMOS PARTIDOS — ${eq.nombre.toUpperCase()}</div>
+    <table class="match-table">
+      <thead><tr><th>FECHA</th><th>RIVAL</th><th>COND</th><th>RES</th><th>GF</th><th>GC</th><th>COMPETICIÓN</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function h2hSection(h2h) {
+  if(!h2h||!h2h.length) return `<div class="section-title">HISTORIAL DIRECTO</div><p style="color:var(--text2);font-size:14px">Sin historial disponible.</p>`;
+  const prom = (h2h.reduce((a,p)=>a+p.total,0)/h2h.length).toFixed(2);
+  const rows = h2h.map(p=>`
+    <div class="h2h-row">
+      <div class="h2h-home"><div>${p.local}</div><div class="h2h-fecha">${p.fecha}</div></div>
+      <div class="h2h-score">${p.gl} — ${p.gv}</div>
+      <div class="h2h-away"><div>${p.visita}</div><div class="h2h-fecha">${p.ganador}</div></div>
+    </div>`).join("");
+  return `
+    <div class="section-title">HISTORIAL DIRECTO (H2H)</div>
+    ${rows}
+    <div style="margin-top:14px;font-size:13px;color:var(--text2);font-family:'Share Tech Mono',monospace">
+      Promedio de goles H2H: <span style="color:var(--accent)">${prom}</span>
+    </div>`;
+}
+
+function renderPrediccion(r) {
+  const pl=r.prob_local||0, pe=r.prob_empate||0, pv=r.prob_visitante||0;
+  const max=Math.max(pl,pe,pv);
+
+  document.getElementById("pred-matchup").textContent = eqLocal.toUpperCase()+" vs "+eqVisita.toUpperCase();
+
+  document.getElementById("prob-grid").innerHTML = [
+    {label:"LOCAL",     pct:pl, color:"var(--accent)"},
+    {label:"EMPATE",    pct:pe, color:"var(--yellow)"},
+    {label:"VISITANTE", pct:pv, color:"var(--accent2)"},
+  ].map((p,i)=>`
+    <div class="prob-card ${p.pct===max?"winner":""}" style="animation-delay:${i*0.1}s">
+      <div class="prob-label">${p.label}</div>
+      <div class="prob-number" style="color:${p.color}">${p.pct}%</div>
+      <div class="prob-bar"><div class="prob-fill" style="width:${p.pct}%;background:${p.color}"></div></div>
+    </div>`).join("");
+
+  document.getElementById("marcador-box").innerHTML = `
+    <div class="marcador-equipo">
+      <div class="marcador-nombre">${eqLocal.toUpperCase()}</div>
+      <div class="marcador-goles" style="color:var(--accent)">${r.goles_esperados_local}</div>
+    </div>
+    <div class="marcador-vs">VS</div>
+    <div class="marcador-equipo">
+      <div class="marcador-nombre">${eqVisita.toUpperCase()}</div>
+      <div class="marcador-goles" style="color:var(--accent2)">${r.goles_esperados_visitante}</div>
+    </div>`;
+
+  document.getElementById("badges-row").innerHTML = `
+    <div class="badge-item conf-${r.confianza}"><div class="dot"></div>CONFIANZA: ${(r.confianza||"?").toUpperCase()}</div>
+    <div class="badge-item riesgo-${r.nivel_riesgo}"><div class="dot"></div>RIESGO: ${(r.nivel_riesgo||"?").toUpperCase()}</div>
+    <div class="badge-item"><div class="dot" style="background:var(--accent)"></div>IA: ${MODEL.toUpperCase()}</div>`;
+
+  document.getElementById("apuestas-grid").innerHTML = `
+    <div class="apuesta-card"><div class="apuesta-tipo">1X2 RESULTADO</div><div class="apuesta-val">${r.apuesta_1x2||"?"}</div></div>
+    <div class="apuesta-card"><div class="apuesta-tipo">AMBOS ANOTAN</div><div class="apuesta-val" style="color:${r.apuesta_ambos_anotan==="Si"?"var(--green)":"var(--red)"}">${r.apuesta_ambos_anotan||"?"}</div></div>
+    <div class="apuesta-card"><div class="apuesta-tipo">TOTAL GOLES</div><div class="apuesta-val">${r.apuesta_total_goles||"?"}</div></div>`;
+
+  document.getElementById("apuesta-segura-box").innerHTML = `
+    <div class="apuesta-segura-title">⭐ APUESTA MÁS SEGURA SEGÚN IA</div>
+    <div class="apuesta-segura-val">${r.apuesta_segura||"?"}</div>
+    <div class="apuesta-segura-razon">${r.razon_apuesta_segura||""}</div>`;
+
+  document.getElementById("analisis-box").innerHTML = `
+    <div class="analisis-title">ANÁLISIS DETALLADO (${MODEL.toUpperCase()})</div>
+    <div class="analisis-text">${r.analisis||"Sin análisis."}</div>`;
+
+  document.getElementById("pred-section").style.display = "block";
+  document.getElementById("pred-section").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+document.addEventListener("keydown", e => { if(e.key==="Enter") analizar(); });
+</script>
 </body>
 </html>
