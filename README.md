@@ -7,7 +7,7 @@
 
 ## Descripción General
 
-**Match Oracle** obtiene estadísticas reales de la API [football-data.org](https://www.football-data.org/) y las procesa con el modelo de lenguaje **llama3.2** corriendo localmente a través de **Ollama**, generando predicciones de resultado, marcador esperado, probabilidades y análisis detallado por partido.
+**Betting App** obtiene estadísticas reales de la API [football-data.org](https://www.football-data.org/) y las procesa con el modelo de lenguaje **llama3.2** corriendo localmente a través de **Ollama**, generando predicciones de resultado, marcador esperado, probabilidades y análisis detallado por partido.
 
 El proyecto tiene dos fases de desarrollo:
 
